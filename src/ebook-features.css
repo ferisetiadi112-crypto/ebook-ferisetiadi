@@ -55,3 +55,8 @@
  .pdf-stage{gap:5px;padding:12px 4px;min-height:55vh}.pdf-turn-arrow{width:30px;height:38px;padding:5px}.pdf-spread{width:calc(100vw - 54px);max-height:68vh}.pdf-spread.single-page{width:calc(100vw - 54px)}.pdf-page-canvas,.pdf-spread.single-page .pdf-page-canvas{max-height:68vh}.pdf-bottom-nav{gap:7px}.pdf-bottom-nav button{padding:7px 8px}.pdf-wheel-hint{max-width:95vw;line-height:1.5}
 }
 @media(prefers-reduced-motion:reduce){.pdf-spread{animation:none!important;transition:none!important}}
+
+/* Allow the enlarged spread to exceed the viewport so zoom is visible and pannable. */
+.pdf-stage.pdf-stage-zoomed{justify-content:flex-start;align-items:flex-start;overflow:auto;cursor:grab}
+.pdf-stage.pdf-stage-zoomed:active{cursor:grabbing}
+.pdf-stage.pdf-stage-zoomed .pdf-spread{flex-shrink:0}
