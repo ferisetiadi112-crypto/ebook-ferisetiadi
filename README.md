@@ -1,36 +1,33 @@
-# Perpustakaan Digital Feri Setiadi
+# Feri Setiadi Digital Library
 
-A personal digital publishing website for public book catalogs and interactive flipbook reading.
+A React + Vite public ebook catalogue with a PostgreSQL-backed publication API, secure admin sessions, private Vercel Blob uploads, and a PDF.js reader.
 
-## Goals
+## Architecture
+- Frontend: React, TypeScript, Vite, React Router.
+- Database: Neon PostgreSQL (admins, admin_sessions, books).
+- File storage: private Vercel Blob; readers receive PDFs through a published-book endpoint, not a raw storage URL.
+- Authentication: bcrypt password hashes, HttpOnly/Secure/SameSite session cookie, server-side session expiry.
+- Public readers do not need an account. Draft books are visible only to authenticated admins.
 
-- Public catalog and book detail pages that require no reader login.
-- Interactive page-flip reader.
-- Separate protected admin area for book metadata, cover images, PDFs, drafts, and publication status.
-- Visual identity aligned with [ferisetiadi.my.id](https://ferisetiadi.my.id), with catalog and reader UX inspired by common digital publishing platforms.
-- Target domain: https://ebook.ferisetiadi.my.id
+## Vercel environment variables
+- DATABASE_URL — Neon PostgreSQL connection string (sensitive).
+- SESSION_SECRET — long random secret for session operations.
+- SETUP_SECRET — one-time key to create the first admin. Remove this variable after the first admin account is created.
+- BLOB_READ_WRITE_TOKEN — connected by Vercel Blob storage integration.
 
-## Development status
-
-This repository starts with the foundation and design prototype. Database, file upload, authentication, and production flipbook rendering must be implemented and tested before being considered production-ready.
+## First admin
+1. Deploy to Vercel and wait for the deployment to become Ready.
+2. Open /admin, choose Aktivasi admin pertama, and enter SETUP_SECRET, an admin email, and a password of at least 12 characters.
+3. Sign in, then remove SETUP_SECRET from Vercel project environment variables and redeploy.
+4. Use the admin studio to upload a PDF (up to 50 MB), enter metadata, save as draft, or publish.
 
 ## Local development
+Copy environment values into .env.local (never commit it), then run npm install and npm run dev. Vercel API routes require Vercel dev/runtime for local API testing.
 
-```bash
-npm install
-npm run dev
-```
+## Database schema
+See db/migrations/001_initial_schema.sql. The schema is also provisioned in the connected Neon project.
 
-## Planned stack
-
-- React + TypeScript + Vite
-- React Router
-- Page-flip reader library (planned)
-- PostgreSQL and object storage (planned)
-- Vercel deployment
-
-## Security notes
-
-- Never commit credentials, API keys, private PDFs, or environment files.
-- Draft books must never appear in public catalog endpoints.
-- Admin mutations must be authorized server-side; hiding UI controls is not sufficient.
+## Important
+- Never commit database URLs, blob tokens, session secrets, or admin passwords.
+- Published books are public; draft PDFs are served only after admin authentication.
+- Remove/replace a book's PDF from Vercel Blob separately if its database record is deleted.
