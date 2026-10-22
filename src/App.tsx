@@ -8,7 +8,7 @@ import {
   ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, Grid2X2, LibraryBig,
   ListFilter, Menu, Search, ShieldCheck, Sparkles, X
 } from "lucide-react";
-import { books, type Book } from "./data/books";
+import type { Book } from "./data/books";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
