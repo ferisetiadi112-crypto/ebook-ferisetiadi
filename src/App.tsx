@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Admin from "./Admin";
 import PdfFlipbook from "./PdfFlipbook";
+import * as pdfjs from "pdfjs-dist";
 import "./ebook-features.css";
 import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import {
@@ -8,6 +9,47 @@ import {
   ListFilter, Menu, Search, ShieldCheck, Sparkles, X
 } from "lucide-react";
 import { books, type Book } from "./data/books";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+
+const pdfCoverCache = new Map<string, Promise<string>>();
+function loadFirstPageCover(slug: string): Promise<string> {
+  const cached = pdfCoverCache.get(slug);
+  if (cached) return cached;
+  const task = (async () => {
+    const doc = await pdfjs.getDocument({ url: "/api/books/" + encodeURIComponent(slug) + "/pdf", withCredentials: true }).promise;
+    try {
+      const page = await doc.getPage(1);
+      const viewport = page.getViewport({ scale: 0.8 });
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Canvas tidak tersedia");
+      await page.render({ canvasContext: context, viewport }).promise;
+      return canvas.toDataURL("image/jpeg", 0.84);
+    } finally {
+      await doc.destroy();
+    }
+  })();
+  pdfCoverCache.set(slug, task);
+  task.catch(() => pdfCoverCache.delete(slug));
+  return task;
+}
+
+function PdfCover({ book, alt, className }: { book: Pick<Book, "slug" | "title" | "cover">; alt: string; className?: string }) {
+  const [preview, setPreview] = useState("");
+  useEffect(() => {
+    if (book.cover) return;
+    let active = true;
+    loadFirstPageCover(book.slug).then((src) => { if (active) setPreview(src); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [book.slug, book.cover]);
+  const placeholder = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#e6edf5"/><stop offset="1" stop-color="#b7c5d6"/></linearGradient></defs><rect width="600" height="800" fill="url(#g)"/><rect x="18" y="18" width="564" height="764" rx="8" fill="none" stroke="#fff" stroke-opacity=".65" stroke-width="2"/><text x="48" y="650" font-family="Georgia,serif" font-size="32" fill="#24364d">' + book.title.replace(/[&<>"]/g, "") + '</text><text x="48" y="704" font-family="Arial,sans-serif" font-size="18" fill="#52647b">MEMUAT SAMPUL PDF…</text></svg>'
+  );
+  return <img className={className} src={book.cover || preview || placeholder} alt={alt} loading="lazy" />;
+}
 
 function useLibraryBooks() {
   const [items, setItems] = useState<Book[]>(books);
@@ -67,7 +109,7 @@ function Footer() {
 function BookCard({ book, featured = false }: { book: Book; featured?: boolean }) {
   return <article className={featured ? "book-card book-card-featured" : "book-card"}>
     <Link to={`/buku/${book.slug}`} className="book-art" aria-label={`Baca ${book.title}`}>
-      <img src={book.cover} alt={`Sampul ${book.title}`} loading="lazy" />
+      <PdfCover book={book} alt={`Sampul ${book.title}`} />
       <span className="book-cover-overlay" />
       <span className="book-open"><BookOpen size={16} /> Baca buku</span>
       <span className="book-spine" />
@@ -96,7 +138,7 @@ function Home() {
         </div>
         <div className="hero-feature">
           <div className="feature-label"><Sparkles size={14} /> PUBLIKASI PILIHAN</div>
-          <div className="feature-book-frame"><img src={featured?.cover} alt={featured?.title} /><div className="feature-book-shade" /><div className="feature-book-title"><span>{featured?.category}</span><h2>{featured?.title}</h2><p>{featured?.subtitle}</p><small>FERI SETIADI</small></div><div className="feature-float"><BookOpen size={18} /><span><strong>Flipbook interaktif</strong><small>Baca langsung di browser</small></span></div></div>
+          <div className="feature-book-frame"><PdfCover book={featured} alt={featured.title} /><div className="feature-book-shade" /><div className="feature-book-title"><span>{featured?.category}</span><h2>{featured?.title}</h2><p>{featured?.subtitle}</p><small>FERI SETIADI</small></div><div className="feature-float"><BookOpen size={18} /><span><strong>Flipbook interaktif</strong><small>Baca langsung di browser</small></span></div></div>
         </div>
       </div>
       <div className="hero-bottomline"><span>PEKERJAAN SOSIAL</span><span className="line" /><span>RISET & PEMIKIRAN</span><span className="line" /><span>INOVASI SOSIAL</span></div>
@@ -139,7 +181,7 @@ function BookDetails() {
   if (!book) return <main className="page-shell not-found"><h1>Buku tidak ditemukan.</h1><Link className="button button-dark" to="/katalog">Kembali ke katalog</Link></main>;
   return <main className="page-shell book-detail-page">
     <button className="back-link" onClick={() => navigate(-1)}><ArrowLeft size={16} /> Kembali</button>
-    <div className="detail-layout"><div className="detail-cover"><img src={book.cover} alt={book.title} /><span className="detail-cover-shade" /><div className="detail-cover-caption"><span>{book.category}</span><h2>{book.title}</h2><p>{book.subtitle}</p><small>FERI SETIADI</small></div></div>
+    <div className="detail-layout"><div className="detail-cover"><PdfCover book={book} alt={book.title} /><span className="detail-cover-shade" /><div className="detail-cover-caption"><span>{book.category}</span><h2>{book.title}</h2><p>{book.subtitle}</p><small>FERI SETIADI</small></div></div>
       <div className="detail-copy"><div className="eyebrow eyebrow-dark">PUBLIKASI · {book.year}</div><h1>{book.title}</h1><p className="detail-subtitle">{book.subtitle}</p><div className="detail-author"><span className="author-avatar">FS</span><span><strong>{book.author}</strong><small>Penulis dan peneliti</small></span></div><p className="detail-description">{book.description}</p><div className="detail-stats"><div><span>Kategori</span><strong>{book.category}</strong></div><div><span>Halaman</span><strong>{book.pages || "Pratinjau"}</strong></div><div><span>Bahasa</span><strong>Indonesia</strong></div></div><Link to={`/baca/${book.slug}`} className="button button-dark detail-read"><BookOpen size={18} /> Baca flipbook <ArrowRight size={17} /></Link><p className="public-note"><Check size={14} /> Dapat dibaca publik tanpa akun.</p></div></div>
   </main>;
 }
