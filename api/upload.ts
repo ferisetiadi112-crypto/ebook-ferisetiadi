@@ -12,10 +12,11 @@ export async function POST(request: Request): Promise<Response> {
       request,
       onBeforeGenerateToken: async (_pathname: string, clientPayload?: string) => {
         const payload = clientPayload ? JSON.parse(clientPayload) : {};
-        if (payload.kind !== "book-pdf") throw new Error("Jenis unggahan tidak diizinkan.");
+        if (payload.kind !== "book-pdf" && payload.kind !== "book-cover") throw new Error("Jenis unggahan tidak diizinkan.");
+        const isCover = payload.kind === "book-cover";
         return {
-          allowedContentTypes: ["application/pdf"],
-          maximumSizeInBytes: 50 * 1024 * 1024,
+          allowedContentTypes: isCover ? ["image/jpeg"] : ["application/pdf"],
+          maximumSizeInBytes: isCover ? 2 * 1024 * 1024 : 50 * 1024 * 1024,
           addRandomSuffix: true,
           access: "private",
         };
