@@ -15,7 +15,7 @@ function useLibraryBooks() {
     let active = true;
     fetch("/api/books").then((response) => response.ok ? response.json() : Promise.reject())
       .then((data) => {
-        if (!active || !Array.isArray(data.books) || data.books.length === 0) return;
+        if (!active || !Array.isArray(data.books)) return;
         const mapped: Book[] = data.books.map((item: any) => ({
           id: item.id, slug: item.slug, title: item.title, subtitle: item.subtitle || "",
           author: item.author || "Feri Setiadi", category: item.category || "Umum",
@@ -82,7 +82,7 @@ function BookCard({ book, featured = false }: { book: Book; featured?: boolean }
 function Home() {
   const libraryBooks = useLibraryBooks();
   const publicBooks = publishedBooks(libraryBooks);
-  const featured = publicBooks.find((book) => book.featured) ?? publicBooks[0];
+  const featured = publicBooks.find((book) => book.featured) ?? publicBooks[0] ?? books[0];
   return <>
     <section className="hero">
       <div className="hero-glow hero-glow-one" /><div className="hero-glow hero-glow-two" />
