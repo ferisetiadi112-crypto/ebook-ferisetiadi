@@ -5,7 +5,7 @@ import { BookOpen, CheckCircle2, FileUp, LogIn, LogOut, Plus, RefreshCw, ShieldC
 type AdminBook = {id:string;slug:string;title:string;subtitle:string;author:string;category:string;year:number;description:string;cover:string;pages:number;status:"draft"|"published";featured:boolean};
 const blank = {title:"",subtitle:"",author:"Feri Setiadi",category:"Pekerjaan Sosial",year:new Date().getFullYear(),description:"",cover:"",pages:0,status:"draft" as "draft"|"published",featured:false};
 async function request(url:string, options:RequestInit={}) {
- const response=await fetch(url,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})},credentials:"same-origin"});
+ const response=await fetch(url,{...options,headers:{"Content-Type":"application/json",...((options.headers||{}) as Record<string,string>)},credentials:"same-origin"});
  const data=await response.json().catch(()=>({error:"Respons server tidak valid."}));
  if(!response.ok)throw new Error(data.error||"Permintaan gagal.");
  return data;
