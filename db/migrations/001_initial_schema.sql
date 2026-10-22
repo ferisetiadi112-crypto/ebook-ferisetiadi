@@ -1,0 +1,7 @@
+-- Initial schema for Feri Setiadi Digital Library
+CREATE TABLE IF NOT EXISTS admins (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), email TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), last_login_at TIMESTAMPTZ);
+CREATE TABLE IF NOT EXISTS books (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), slug TEXT NOT NULL UNIQUE, title TEXT NOT NULL, subtitle TEXT NOT NULL DEFAULT '', author TEXT NOT NULL DEFAULT 'Feri Setiadi', category TEXT NOT NULL DEFAULT 'Umum', publication_year INTEGER NOT NULL DEFAULT EXTRACT(YEAR FROM NOW())::INTEGER, description TEXT NOT NULL DEFAULT '', cover_url TEXT NOT NULL DEFAULT '', pdf_blob_path TEXT NOT NULL, page_count INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','published')), featured BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), published_at TIMESTAMPTZ);
+CREATE INDEX IF NOT EXISTS books_status_created_idx ON books(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS books_category_idx ON books(category);
+CREATE TABLE IF NOT EXISTS admin_sessions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), admin_id UUID NOT NULL REFERENCES admins(id) ON DELETE CASCADE, token_hash TEXT NOT NULL UNIQUE, expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE INDEX IF NOT EXISTS admin_sessions_expires_idx ON admin_sessions(expires_at);
