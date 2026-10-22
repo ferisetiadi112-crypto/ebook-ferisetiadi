@@ -13,21 +13,34 @@ import type { Book } from "./data/books";
 pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
 const pdfCoverCache = new Map<string, Promise<string>>();
+const PDF_COVER_STORAGE_PREFIX = "ebook-pdf-cover-v1:";
 function loadFirstPageCover(slug: string): Promise<string> {
   const cached = pdfCoverCache.get(slug);
   if (cached) return cached;
+  // Persist generated cover thumbnails so a page refresh does not download and render the PDF again.
+  try {
+    const saved = localStorage.getItem(PDF_COVER_STORAGE_PREFIX + slug);
+    if (saved?.startsWith("data:image/")) {
+      const ready = Promise.resolve(saved);
+      pdfCoverCache.set(slug, ready);
+      return ready;
+    }
+  } catch { /* Storage can be unavailable in private browsing; continue without persistence. */ }
   const task = (async () => {
     const doc = await pdfjs.getDocument({ url: "/api/books/" + encodeURIComponent(slug) + "/pdf", withCredentials: true }).promise;
     try {
       const page = await doc.getPage(1);
-      const viewport = page.getViewport({ scale: 0.8 });
+      // A compact thumbnail is sufficient for catalogue cards and loads faster.
+      const viewport = page.getViewport({ scale: 0.55 });
       const canvas = document.createElement("canvas");
       canvas.width = Math.ceil(viewport.width);
       canvas.height = Math.ceil(viewport.height);
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Canvas tidak tersedia");
       await page.render({ canvasContext: context, viewport }).promise;
-      return canvas.toDataURL("image/jpeg", 0.84);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.72);
+      try { localStorage.setItem(PDF_COVER_STORAGE_PREFIX + slug, dataUrl); } catch { /* Keep this thumbnail in memory only if storage is full. */ }
+      return dataUrl;
     } finally {
       await doc.destroy();
     }
