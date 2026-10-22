@@ -13,6 +13,9 @@ export default function PdfFlipbook({slug,title}:{slug:string;title:string}){
  const rightRef=useRef<HTMLCanvasElement|null>(null);
  const docRef=useRef<PDFDocumentProxy|null>(null);
  const stageRef=useRef<HTMLDivElement|null>(null);
+ const leftRenderTaskRef=useRef<any>(null);
+ const rightRenderTaskRef=useRef<any>(null);
+ const lastWheelZoomAtRef=useRef(0);
  const [total,setTotal]=useState(0);
  const [page,setPage]=useState(1);
  const [zoom,setZoom]=useState(1);
@@ -49,19 +52,41 @@ export default function PdfFlipbook({slug,title}:{slug:string;title:string}){
   return()=>{cancelled=true;void docRef.current?.destroy();docRef.current=null};
  },[slug]);
  useEffect(()=>{let cancelled=false;
-  const render=async(ref:HTMLCanvasElement|null,n:number)=>{
+  const cancelTask=(taskRef:{current:any})=>{
+   if(taskRef.current){
+    try{taskRef.current.cancel()}catch{/* Task may already be complete. */}
+    taskRef.current=null;
+   }
+  };
+  cancelTask(leftRenderTaskRef);
+  cancelTask(rightRenderTaskRef);
+  const render=async(ref:HTMLCanvasElement|null,n:number,taskRef:{current:any})=>{
    if(!ref)return;
-   if(!docRef.current||n<1||n>total){const c=ref.getContext("2d");c?.clearRect(0,0,ref.width,ref.height);ref.style.display="none";return}
+   if(!docRef.current||n<1||n>total){
+    const ctx=ref.getContext("2d");ctx?.clearRect(0,0,ref.width,ref.height);
+    ref.style.display="none";return;
+   }
    ref.style.display="block";
-   const pdfPage=await docRef.current.getPage(n);if(cancelled)return;
+   const doc=docRef.current;
+   const pdfPage=await doc.getPage(n);
+   if(cancelled||docRef.current!==doc)return;
    const viewport=pdfPage.getViewport({scale:zoom*1.15});
    const canvas=ref;const context=canvas.getContext("2d");if(!context)return;
    canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
-   await pdfPage.render({canvasContext:context,viewport}).promise;
+   const task=pdfPage.render({canvasContext:context,viewport});
+   taskRef.current=task;
+   try{await task.promise}
+   finally{if(taskRef.current===task)taskRef.current=null}
   };
   const rightPage=mode==="double"?page+1:0;
-  Promise.all([render(leftRef.current,page),render(rightRef.current,rightPage)]).catch(()=>{if(!cancelled)setError("Gagal merender halaman PDF.")});
-  return()=>{cancelled=true};
+  Promise.all([
+   render(leftRef.current,page,leftRenderTaskRef),
+   render(rightRef.current,rightPage,rightRenderTaskRef)
+  ]).catch((err:any)=>{
+   const cancelledRender=err?.name==="RenderingCancelledException"||err?.name==="AbortException";
+   if(!cancelled&&!cancelledRender)setError("Gagal merender halaman PDF. Coba reset zoom atau muat ulang pembaca.");
+  });
+  return()=>{cancelled=true;cancelTask(leftRenderTaskRef);cancelTask(rightRenderTaskRef)};
  },[page,zoom,total,mode]);
  const turn=(direction:"next"|"previous")=>{
   const step=mode==="single"?1:2;
@@ -71,7 +96,7 @@ export default function PdfFlipbook({slug,title}:{slug:string;title:string}){
  };
  const previous=()=>turn("previous");const next=()=>turn("next");
  useEffect(()=>{const onKey=(event:KeyboardEvent)=>{if(event.key==="ArrowLeft")previous();if(event.key==="ArrowRight")next();if(event.key==="Escape")setFullscreen(false)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)});
- const onWheel=(event:WheelEvent<HTMLDivElement>)=>{if(event.ctrlKey||event.metaKey||Math.abs(event.deltaY)>0){event.preventDefault();changeZoom(event.deltaY<0?.1:-.1)}};
+ const onWheel=(event:WheelEvent<HTMLDivElement>)=>{event.preventDefault();const now=Date.now();if(now-lastWheelZoomAtRef.current<100)return;lastWheelZoomAtRef.current=now;changeZoom(event.deltaY<0?.1:-.1)};
  const isFirst=page<=1;const isLast=mode==="single"?page>=total:page+1>=total;
  return <main className={fullscreen?"pdf-reader pdf-reader-fullscreen":"pdf-reader"}>
   <header className="pdf-reader-header">
