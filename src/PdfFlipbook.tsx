@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { WheelEvent } from "react";
 import { BookOpen, ChevronLeft, ChevronRight, Maximize2, Minimize2, RotateCcw, Volume2, VolumeX, ZoomIn, ZoomOut } from "lucide-react";
 import * as pdfjs from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
@@ -70,7 +71,7 @@ export default function PdfFlipbook({slug,title}:{slug:string;title:string}){
  };
  const previous=()=>turn("previous");const next=()=>turn("next");
  useEffect(()=>{const onKey=(event:KeyboardEvent)=>{if(event.key==="ArrowLeft")previous();if(event.key==="ArrowRight")next();if(event.key==="Escape")setFullscreen(false)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)});
- const onWheel=(event:React.WheelEvent<HTMLDivElement>)=>{if(event.ctrlKey||event.metaKey||Math.abs(event.deltaY)>0){event.preventDefault();changeZoom(event.deltaY<0?.1:-.1)}};
+ const onWheel=(event:WheelEvent<HTMLDivElement>)=>{if(event.ctrlKey||event.metaKey||Math.abs(event.deltaY)>0){event.preventDefault();changeZoom(event.deltaY<0?.1:-.1)}};
  const isFirst=page<=1;const isLast=mode==="single"?page>=total:page+1>=total;
  return <main className={fullscreen?"pdf-reader pdf-reader-fullscreen":"pdf-reader"}>
   <header className="pdf-reader-header">
