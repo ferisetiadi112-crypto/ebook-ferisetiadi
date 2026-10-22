@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import Admin from "./Admin";
 import PdfFlipbook from "./PdfFlipbook";
 import "./ebook-features.css";
-import { Link, Route, Routes, useParams } from "react-router-dom";
+import { Link, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowRight, BookOpen, Check, ChevronDown, Grid2X2, LibraryBig,
+  ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, Grid2X2, LibraryBig,
   ListFilter, Menu, Search, ShieldCheck, Sparkles, X
 } from "lucide-react";
 import { books, type Book } from "./data/books";
