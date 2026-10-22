@@ -52,7 +52,7 @@ function PdfCover({ book, alt, className }: { book: Pick<Book, "slug" | "title" 
 }
 
 function useLibraryBooks() {
-  const [items, setItems] = useState<Book[]>(books);
+  const [items, setItems] = useState<Book[]>([]);
   useEffect(() => {
     let active = true;
     fetch("/api/books").then((response) => response.ok ? response.json() : Promise.reject())
@@ -71,7 +71,7 @@ function useLibraryBooks() {
   }, []);
   return items;
 }
-function publishedBooks(items: Book[] = books) {
+function publishedBooks(items: Book[] = []) {
   return items.filter((book) => book.status === "published");
 }
 
@@ -124,7 +124,7 @@ function BookCard({ book, featured = false }: { book: Book; featured?: boolean }
 function Home() {
   const libraryBooks = useLibraryBooks();
   const publicBooks = publishedBooks(libraryBooks);
-  const featured = publicBooks.find((book) => book.featured) ?? publicBooks[0] ?? books[0];
+  const featured = publicBooks.find((book) => book.featured) ?? publicBooks[0];
   return <>
     <section className="hero">
       <div className="hero-glow hero-glow-one" /><div className="hero-glow hero-glow-two" />
@@ -138,7 +138,7 @@ function Home() {
         </div>
         <div className="hero-feature">
           <div className="feature-label"><Sparkles size={14} /> PUBLIKASI PILIHAN</div>
-          <div className="feature-book-frame"><PdfCover book={featured} alt={featured.title} /><div className="feature-book-shade" /><div className="feature-book-title"><span>{featured?.category}</span><h2>{featured?.title}</h2><p>{featured?.subtitle}</p><small>FERI SETIADI</small></div><div className="feature-float"><BookOpen size={18} /><span><strong>Flipbook interaktif</strong><small>Baca langsung di browser</small></span></div></div>
+          {featured ? <div className="feature-book-frame"><PdfCover book={featured} alt={featured.title} /><div className="feature-book-shade" /><div className="feature-book-title"><span>{featured.category}</span><h2>{featured.title}</h2><p>{featured.subtitle}</p><small>FERI SETIADI</small></div><div className="feature-float"><BookOpen size={18} /><span><strong>Flipbook interaktif</strong><small>Baca langsung di browser</small></span></div></div> : <div className="feature-book-frame feature-book-empty"><BookOpen size={44} /><div className="feature-book-title"><span>PERPUSTAKAAN DIGITAL</span><h2>Publikasi segera hadir.</h2><p>Buku yang diterbitkan akan tampil di sini.</p></div></div>}
         </div>
       </div>
       <div className="hero-bottomline"><span>PEKERJAAN SOSIAL</span><span className="line" /><span>RISET & PEMIKIRAN</span><span className="line" /><span>INOVASI SOSIAL</span></div>
