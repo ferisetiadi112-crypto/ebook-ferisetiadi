@@ -99,11 +99,11 @@ export default function PdfFlipbook({slug,title}:{slug:string;title:string}){
      <button title={fullscreen?"Keluar layar penuh":"Layar penuh"} aria-label="Layar penuh" onClick={()=>setFullscreen(v=>!v)}>{fullscreen?<Minimize2 size={16}/>:<Maximize2 size={16}/>}</button>
     </div>
    </div>
-   <div className={"pdf-stage "+(shadows?"with-shadows":"")} ref={stageRef} onWheel={onWheel}>
+   <div className={"pdf-stage "+(shadows?"with-shadows ":"")+(zoom>1?"pdf-stage-zoomed":"")} ref={stageRef} onWheel={onWheel}>
     <button className="pdf-turn-arrow" aria-label="Halaman sebelumnya" disabled={isFirst} onClick={previous}><ChevronLeft/></button>
-    <div key={turnKey} className={"pdf-spread "+(mode==="single"?"single-page":"double-page")+" effect-"+effect+" turn-"+turnDirection}>
-     <div className="pdf-page-wrap"><canvas ref={leftRef} className="pdf-page-canvas"/></div>
-     {mode==="double"&&<div className="pdf-page-wrap right-page-wrap"><canvas ref={rightRef} className="pdf-page-canvas"/></div>}
+    <div key={turnKey} className={"pdf-spread "+(mode==="single"?"single-page":"double-page")+" effect-"+effect+" turn-"+turnDirection} style={{width:`min(${(mode==="single"?48:78)*zoom}vw, ${(mode==="single"?620:1080)*zoom}px)`,maxWidth:"none",maxHeight:"none",flexShrink:0,margin:zoom>1?"0 auto":"0"}}>
+     <div className="pdf-page-wrap"><canvas ref={leftRef} className="pdf-page-canvas" style={{maxHeight:`${72*zoom}vh`}}/></div>
+     {mode==="double"&&<div className="pdf-page-wrap right-page-wrap"><canvas ref={rightRef} className="pdf-page-canvas" style={{maxHeight:`${72*zoom}vh`}}/></div>}
     </div>
     <button className="pdf-turn-arrow" aria-label="Halaman berikutnya" disabled={isLast} onClick={next}><ChevronRight/></button>
    </div>
