@@ -16,4 +16,4 @@ export async function adminFromRequest(req: any) {
  return result.rows[0]??null;
 }
 export function slugify(value:string){return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,90)||"buku";}
-export function cleanBook(row:any){return {id:row.id,slug:row.slug,title:row.title,subtitle:row.subtitle,author:row.author,category:row.category,year:row.publication_year,description:row.description,cover:row.cover_url,pages:row.page_count,status:row.status,featured:row.featured,createdAt:row.created_at,publishedAt:row.published_at,pdfUrl:row.pdf_blob_path};}
+export function cleanBook(row:any){return {id:row.id,slug:row.slug,title:row.title,subtitle:row.subtitle,author:row.author,category:row.category,year:row.publication_year,description:row.description,cover:row.cover_url,pages:row.page_count,status:row.status,featured:row.featured,createdAt:row.created_at,publishedAt:row.published_at};}
