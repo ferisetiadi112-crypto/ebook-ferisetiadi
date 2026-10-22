@@ -3,6 +3,7 @@
   "rewrites": [
     { "source": "/admin", "destination": "/index.html" },
     { "source": "/katalog", "destination": "/index.html" },
-    { "source": "/buku/:slug", "destination": "/index.html" }
+    { "source": "/buku/:slug", "destination": "/index.html" },
+    { "source": "/baca/:slug", "destination": "/index.html" }
   ]
 }
